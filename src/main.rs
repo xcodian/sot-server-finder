@@ -2,8 +2,7 @@ use std::{net::IpAddr, process::Command};
 
 use etherparse::{IpHeader, PacketHeaders};
 use sysinfo::{PidExt, ProcessExt, ProcessRefreshKind, RefreshKind, System, SystemExt};
-
-mod wordlist;
+use winroute::{Route, RouteManager};
 
 fn get_sot_pid(s: &System) -> Option<u32> {
     for process in s.processes_by_name("SoTGame.exe") {
@@ -89,12 +88,27 @@ fn main() {
         }
     };
 
-    println!("Waiting for you to connect to a game in Sea of Thieves...");
     let mut cap = pcap::Capture::from_device(dev)
         .unwrap()
         .immediate_mode(true)
         .open()
         .unwrap();
+
+    let route_manager = RouteManager::new().unwrap();
+    let the_void = "0.0.0.0".parse().unwrap();
+
+    println!("Which server are you trying to connect to? (e.g. 20.213.146.107:30618)\n    Enter 'idk' if you want to just print the server you're connecting to.");
+    let mut target = String::new(); // ""
+    std::io::stdin().read_line(&mut target).unwrap();
+    let target = target.trim();
+
+    if target == "idk" {
+        println!("Alright, will print connected server.");
+    } else {
+        println!("Alright, server hop target: {}", target);
+    }
+
+    println!("Waiting for you to connect to a game in Sea of Thieves...");
 
     // iterate udp packets
     loop {
@@ -108,20 +122,46 @@ fn main() {
                             }
 
                             if get_sot_ports(sot_pid).contains(&udp.source_port) {
-                                let friendly = ipv4
-                                    .destination
-                                    .map(|x| wordlist::WORDS[x as usize].to_string())
-                                    .join("-");
+                                let ip = ipv4.destination.map(|c| c.to_string()).join(".");
 
-                                println!(
-                                    "You are connected to: {} ({}:{})",
-                                    friendly,
-                                    ipv4.destination.map(|c| c.to_string()).join("."),
-                                    udp.destination_port
-                                );
+                                if target == "idk" {
+                                    println!("Connected to: {}:{}", ip, udp.destination_port);
+                                    std::io::stdin().read_line(&mut String::new()).unwrap();
+                                    break;
+                                }
 
-                                // wait for enter to be hit
-                                std::io::stdin().read_line(&mut String::new()).unwrap();
+                                if format!("{}:{}", ip, udp.destination_port) != target {
+                                    println!("FAIL {}:{}, not the right server.", ip, udp.destination_port);
+                                } else {
+                                    println!("SUCCESS {}:{}", ip, udp.destination_port);
+                                    std::io::stdin().read_line(&mut String::new()).unwrap();
+                                    break;
+                                }
+
+                                let blocking_route =
+                                    Route::new(ip.parse().unwrap(), 32).gateway(the_void);
+
+                                // add route
+                                if let Err(e) = route_manager.add_route(&blocking_route) {
+                                    println!(
+                                        "Error adding route for: {}:{} - {}",
+                                        ip, udp.destination_port, e
+                                    );
+                                } else {
+                                    // wait for enter
+                                    println!("Answer no to 'Do you want to rejoin your previous session?', then press Enter here.");
+                                    std::io::stdin().read_line(&mut String::new()).unwrap();
+                                }
+
+                                println!("Unblocking {}...", ip);
+
+                                // delete route, route_manager.delete_route doesn't work for some reason
+                                let status = Command::new("route").arg("delete").arg(ip).status().unwrap();
+                                if !status.success() {
+                                    println!("Failed to delete route.");
+                                }
+
+                                println!("Try setting sail again.");
                             }
                         }
                     }

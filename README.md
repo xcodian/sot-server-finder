@@ -2,13 +2,6 @@
 
 Find which Sea of Thieves server you're connected to. Useful if you want to be in the same server as your friends. 
 
-```
-Looking for Sea of Thieves...
-Found! PID: 21148
-Waiting for you to connect to a game in Sea of Thieves...
-You are connected to: berlin-stream-montana-johnny (20.213.146.107:30401)
-```
-
 ## Setup
 1. [Download sot-server-finder.exe from GitHub Releases](https://github.com/xxcodianxx/sot-server-finder/releases/download/0.1.0/sot-server-finder.exe) or build it yourself.
 2. Download and run [the Npcap installer](https://npcap.com/dist/npcap-1.72.exe). Select WinPCap compatibility mode. 
@@ -50,4 +43,4 @@ The [build script](build.rs) will automatically download [the Npcap SDK version 
 Your exe file will be `target/release/sot-server-finder.exe`.
 
 ## Also See
-- Someone did this 3 years ago in C#: https://github.com/Saeryhz/SeaOfEase
+- https://github.com/Saeryhz/SeaOfEase

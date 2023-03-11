@@ -593,6 +593,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "libloading"
+version = "0.7.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b67380fd3b2fbe7527a606e18729d21c6f3951633d0500574c4dc22d2d638b9f"
+dependencies = [
+ "cfg-if",
+ "winapi",
+]
+
+[[package]]
 name = "linux-raw-sys"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -775,7 +785,7 @@ dependencies = [
  "bitflags",
  "errno",
  "libc",
- "libloading",
+ "libloading 0.6.7",
  "pkg-config",
  "regex",
  "windows-sys 0.36.1",
@@ -1061,6 +1071,7 @@ name = "sot-server-finder"
 version = "0.1.0"
 dependencies = [
  "etherparse",
+ "libloading 0.7.4",
  "pcap",
  "reqwest",
  "sysinfo",

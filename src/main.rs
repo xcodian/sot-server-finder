@@ -21,7 +21,15 @@ fn get_sot_ports(pid: u32) -> Vec<u16> {
         .output()
         .unwrap();
 
-    String::from_utf8(cmd.stdout)
+    // jarringly, netstat output contains non-utf8 characters :)
+    let filtered_stdout = cmd
+        .stdout
+        .iter()
+        .filter(|c| c.is_ascii())
+        .copied()
+        .collect();
+
+    String::from_utf8(filtered_stdout)
         .unwrap()
         .lines()
         .filter(|line| line.contains(p))
@@ -34,8 +42,28 @@ fn get_sot_ports(pid: u32) -> Vec<u16> {
 }
 
 fn main() {
+    println!("Making sure you have Npcap installed...");
+    unsafe {
+        let try_load_wpcap = libloading::Library::new("wpcap.dll");
+        if try_load_wpcap.is_err() {
+            println!("{}", "*".repeat(80));
+            println!("ERROR: It doesn't seem like you've installed Npcap.");
+            println!("Please install Npcap from\n    https://npcap.com/dist/npcap-1.72.exe\n");
+            println!("*** MAKE SURE TO INSTALL WITH 'WinPcap API Compatibility' TURNED ON ***");
+            println!("{}\n", "*".repeat(80));
+            println!("Want to continue anyway? Enter 'yes' or 'no':");
+            
+            let mut input = String::new();
+            std::io::stdin().read_line(&mut input).unwrap();
+            let input = input.trim().to_lowercase();
+            if !(input == "y" || input == "yes") {
+                std::process::exit(1);
+            }
+        }
+    }
+
     // wait until we get a sot pid
-    println!("Looking for Sea of Thieves...");
+    println!("Waiting for Sea of Thieves to be running... (you should start it)");
     let mut s =
         System::new_with_specifics(RefreshKind::new().with_processes(ProcessRefreshKind::new()));
 
@@ -125,13 +153,16 @@ fn main() {
                                 let ip = ipv4.destination.map(|c| c.to_string()).join(".");
 
                                 if target == "idk" {
-                                    println!("Connected to: {}:{}", ip, udp.destination_port);
+                                    println!("You are connected to: {}:{}\n   Press Enter to check again.", ip, udp.destination_port);
                                     std::io::stdin().read_line(&mut String::new()).unwrap();
-                                    break;
+                                    continue;
                                 }
 
                                 if format!("{}:{}", ip, udp.destination_port) != target {
-                                    println!("FAIL {}:{}, not the right server.", ip, udp.destination_port);
+                                    println!(
+                                        "FAIL {}:{}, not the right server.",
+                                        ip, udp.destination_port
+                                    );
                                 } else {
                                     println!("SUCCESS {}:{}", ip, udp.destination_port);
                                     std::io::stdin().read_line(&mut String::new()).unwrap();
@@ -156,7 +187,11 @@ fn main() {
                                 println!("Unblocking {}...", ip);
 
                                 // delete route, route_manager.delete_route doesn't work for some reason
-                                let status = Command::new("route").arg("delete").arg(ip).status().unwrap();
+                                let status = Command::new("route")
+                                    .arg("delete")
+                                    .arg(ip)
+                                    .status()
+                                    .unwrap();
                                 if !status.success() {
                                     println!("Failed to delete route.");
                                 }

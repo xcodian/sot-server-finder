@@ -8,6 +8,7 @@ license = "GPL-3.0-or-later"
 
 [dependencies]
 etherparse = "0.13.0"
+libloading = "0.7.4"
 pcap = "1.0.0"
 sysinfo = "0.28.2"
 winroute = "0.2.0"

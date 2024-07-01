@@ -35,7 +35,6 @@ fn main() {
         fs::copy("libs/zip/Lib/x64/wpcap.lib", "libs/wpcap.lib").unwrap();
         fs::copy("libs/zip/Lib/x64/Packet.lib", "libs/Packet.lib").unwrap();
         fs::remove_dir_all("libs/zip").unwrap();
-        fs::remove_dir("libs/zip").unwrap();
     }
 
     println!(r#"cargo:rustc-env=LIB=libs\"#);

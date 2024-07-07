@@ -6,8 +6,8 @@ fn main() {
         panic!("This crate only works on Windows!");
     }
 
-    let mut res = winres::WindowsResource::new();
-    res.set_manifest(r#"
+    winresource::WindowsResource::new()
+        .set_manifest(r#"
     <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
     <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
         <security>
@@ -17,8 +17,9 @@ fn main() {
         </security>
     </trustInfo>
     </assembly>
-    "#);
-    res.compile().unwrap();
+    "#)
+        .compile()
+        .unwrap();
 
     // create the libs folder if it doesn't exist
     let libs = std::path::Path::new("libs");
@@ -35,7 +36,6 @@ fn main() {
         fs::copy("libs/zip/Lib/x64/wpcap.lib", "libs/wpcap.lib").unwrap();
         fs::copy("libs/zip/Lib/x64/Packet.lib", "libs/Packet.lib").unwrap();
         fs::remove_dir_all("libs/zip").unwrap();
-        fs::remove_dir("libs/zip").unwrap();
     }
 
     println!(r#"cargo:rustc-env=LIB=libs\"#);
